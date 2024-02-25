@@ -1,0 +1,2 @@
+to activate env
+.\env\Scripts\activate.ps1

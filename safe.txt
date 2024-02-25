@@ -1,0 +1,60 @@
+import pandas as pd
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+import logging
+
+# Initialize Flask application
+app = Flask(__name__)
+
+# Configure SQLAlchemy database connection
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:4sf21ci030@localhost:3306/result'
+db = SQLAlchemy(app)
+
+# Enable SQL statement logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
+# Define your SQLAlchemy model
+class Student(db.Model):
+    studentid = db.Column(db.String(20), primary_key=True)
+    name = db.Column(db.String(100))
+    dob = db.Column(db.String(20))  # Date of Birth
+    gender = db.Column(db.String(6))
+    email = db.Column(db.String(100))
+    phno = db.Column(db.String(20))  # Assuming phone numbers are stored as strings
+
+# Define a function to create tables and insert data into the database
+def create_tables_and_insert_data():
+    # Create all tables within the application context
+    with app.app_context():
+        db.create_all()
+
+        # Read CSV file into a DataFrame
+        filepath = 'C:/Users/hrush/OneDrive/Desktop/students.csv'
+        df = pd.read_csv(filepath)
+
+        # Remove leading/trailing spaces from column names
+        df.columns = df.columns.str.strip()
+
+        # Insert DataFrame records into MySQL database
+        try:
+            # Loop through each row in the DataFrame
+            for index, row in df.iterrows():
+                # Create an instance of Student with data from the current row
+                record = Student(**row)
+                # Add the record to the session
+                db.session.add(record)
+            
+            # Commit changes to the database
+            db.session.commit()
+            print("Data inserted successfully!")
+        except Exception as e:
+            # Rollback changes if an error occurs
+            db.session.rollback()
+            print("Error inserting data:", e)
+        finally:
+            # Close the database session
+            db.session.close()
+
+# Call the function to create tables and insert data
+create_tables_and_insert_data()

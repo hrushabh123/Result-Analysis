@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Page</title>
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+  <h1>Student Page</h1>
+  
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" id="csvFileInput" name="csvFile" accept=".csv">
+    <button type="submit">Upload CSV</button>
+  </form>
+  <div class="container">
+    <h1>Student Information</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Date of Birth</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.studentid }}</td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.dob }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent the default form submission
+
+      const formData = new FormData();
+      const fileInput = document.getElementById('csvFileInput');
+      const file = fileInput.files[0];
+      formData.append('csvFile', file);
+
+      fetch('/upload/student', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        console.log('File path:', data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    });
+  </script>
+</body>
+</html>

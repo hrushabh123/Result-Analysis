@@ -1,15 +1,6 @@
-studentid,name,gender,email,phno
-APWK7873,hrushabh,male,user413@gmail.com,+91 886-681-8044
-PQZO2488,eashan,male,user927@outlook.com,+91 393-936-3600
-SEVC1665,afrhan,male,user746@outlook.com,+91 757-797-1801
-NEFB1487,rakshith,male,user789@outlook.com,+91 685-246-1388
-ITKW5693,nikith,male,user344@outlook.com,+91 560-252-5396
-AEBE4591,suhas,male,user525@yahoo.com,+91 371-450-3990
-PURN9829,gaurav,male,user788@yahoo.com,+91 764-403-3061
-ZVVB1194,aditya,male,user165@yahoo.com,+91 772-371-1876
-FDRA2497,shavin,male,user443@outlook.com,+91 587-442-6722
-TEMG7812,joe,male,user555@gmail.com,+91 709-920-4487
-IHZP2331,jophin,male,user959@gmail.com,+91 818-274-7177
-BIWI8460,rahil,male,user881@outlook.com,+91 764-443-3810
-AOJZ2748,sujan,male,user843@outlook.com,+91 319-915-3214
-KPJB6692,srujan,male,user178@yahoo.com,+91 828-350-9344
+Facultyid,Facultyname,gender,phno,email
+mus1,mustafa,M,1,mus
+pusp2,pushpalatha,F,2,pus
+rit3,ritesh,M,3,rit
+rati4,ratish,M,4,rat
+dud5,dudella,M,5,dud

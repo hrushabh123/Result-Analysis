@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Result Input Form</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='resultupdate.css') }}">
+</head>
+<body>
+  <h1>Enter Result Information</h1>
+  
+  <div id="resultForm" class="form-container">
+    <label for="studentId">Student ID:</label>
+    <input type="text" id="studentId" name="studentId" required><br>
+
+    <label for="courseId">Course ID:</label>
+    <input type="text" id="courseId" name="courseId" required><br>
+
+    <label for="marksObtained">Marks Obtained:</label>
+    <input type="text" id="marksObtained" name="marksObtained" required><br>
+
+    <label for="grade">Grade:</label>
+    <input type="text" id="grade" name="grade" required><br>
+
+    <label for="sem">Semester:</label>
+    <input type="text" id="sem" name="sem" required><br>
+
+    <label for="year">Year:</label>
+    <input type="text" id="year" name="year" required><br>
+
+    <label for="supplementary">Supplementary:</label>
+    <input type="text" id="supplementary" name="supplementary" required><br>
+
+    <button type="button" onclick="submitForm()">Submit</button>
+  </div>
+
+  <script>
+    function submitForm() {
+      const formData = new FormData(document.getElementById('resultForm'));
+
+      fetch('/submit_manual_result', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.text();
+        }
+        throw new Error('Network response was not ok.');
+      })
+      .then(data => {
+        alert(data);
+        // Optionally, reset the form fields after successful submission
+        document.getElementById('resultForm').reset();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the form');
+      });
+    }
+  </script>
+</body>
+</html>

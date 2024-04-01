@@ -5,14 +5,11 @@ from sqlalchemy import Date,text
 import os
 import logging
 
-# Initialize Flask application
 app = Flask(__name__)
 
-# Configure SQLAlchemy database connection
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:4sf21ci030@localhost:3306/result'
 db = SQLAlchemy(app)
 
-# Define your SQLAlchemy models for different pages
 class Student(db.Model):
     studentid = db.Column(db.String(20), primary_key=True)
     name = db.Column(db.String(100))
@@ -23,13 +20,13 @@ class Student(db.Model):
     entrytype = db.Column(db.String(20))
     passyear = db.Column(db.String(4))
     admissiontype = db.Column(db.String(20))
-    backlog = db.Column(db.Integer)  # Update the data type to Integer
+    backlog = db.Column(db.Integer) 
 
 
 class Department(db.Model):
     departmentid = db.Column(db.String(20), primary_key=True)
     departmentname = db.Column(db.String(100))
-    hod = db.Column(db.String(20))  # Assuming hod (Head of Department) is stored as string
+    hod = db.Column(db.String(20))  
     phno = db.Column(db.String(20))
     facultyid = db.Column(db.String(20), db.ForeignKey('faculty.Facultyid'))  # Foreign key referencing Faculty
 
@@ -47,43 +44,104 @@ class Result(db.Model):
     grade=db.Column(db.String(2))
     sem = db.Column(db.String(20))
     year= db.Column(db.String(20))
+    supplementary=db.Column(db.String(5))
 
 
 class Course(db.Model):
-    courseid = db.Column(db.String(20), primary_key=True)
-    coursename = db.Column(db.String(20))
-    credit = db.Column(db.String(20))
+    courseid= db.Column(db.String(20), primary_key=True)
+    coursename= db.Column(db.String(300))
+    credit= db.Column(db.String(20))
 
 # Create tables if they do not exist
 with app.app_context():
     db.create_all()
+    YEAR1_VIEW_QUERY = """
+     CREATE OR REPLACE VIEW YEAR1 AS
+        SELECT
+            S.PASSYEAR,
+            COUNT(DISTINCT S.STUDENTID) AS TotalStudents,
+            COUNT(DISTINCT CASE WHEN R.YEAR = '1' AND NOT EXISTS (SELECT 1 FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '1' AND (R2.GRADE = 'F' OR R2.SUPPLEMENTARY = 'YES')) THEN S.STUDENTID ELSE NULL END) AS year1,
+            COUNT(DISTINCT CASE WHEN R.YEAR = '2' AND NOT EXISTS (SELECT 1 FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '2' AND (R2.GRADE = 'F' OR R2.SUPPLEMENTARY = 'YES')) THEN S.STUDENTID ELSE NULL END) AS year2,
+            COUNT(DISTINCT CASE WHEN R.YEAR = '3' AND NOT EXISTS (SELECT 1 FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '3' AND (R2.GRADE = 'F' OR R2.SUPPLEMENTARY = 'YES')) THEN S.STUDENTID ELSE NULL END) AS year3,
+            COUNT(DISTINCT CASE WHEN R.YEAR = '4' AND NOT EXISTS (SELECT 1 FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '4' AND (R2.GRADE = 'F' OR R2.SUPPLEMENTARY = 'YES')) THEN S.STUDENTID ELSE NULL END) AS year4
+        FROM
+            STUDENT S
+        JOIN
+            RESULT R ON S.STUDENTID = R.STUDENTID
+        GROUP BY
+            S.PASSYEAR;
+    """
+    db.session.execute(text(YEAR1_VIEW_QUERY))
+    db.session.commit()
+    PASSED_ALL_SUBJECTS_VIEW_QUERY = """
+        # CREATE OR REPLACE VIEW PASSED_ALL_SUBJECTS AS
+        # SELECT
+        #     S.PASSYEAR,
+        #     (SELECT COUNT(DISTINCT STUDENTID) FROM RESULT) AS TotalStudents,
+        #     COUNT(DISTINCT CASE WHEN R.YEAR = '1' THEN S.STUDENTID ELSE NULL END) AS year1,
+        #     COUNT(DISTINCT CASE WHEN R.YEAR = '2' THEN S.STUDENTID ELSE NULL END) AS year2,
+        #     COUNT(DISTINCT CASE WHEN R.YEAR = '3' THEN S.STUDENTID ELSE NULL END) AS year3,
+        #     COUNT(DISTINCT CASE WHEN R.YEAR = '4' THEN S.STUDENTID ELSE NULL END) AS year4
+        # FROM
+        #     STUDENT S
+        # JOIN
+        #     RESULT R ON S.STUDENTID = R.STUDENTID
+        # WHERE
+        #     NOT EXISTS (SELECT 1 FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.GRADE = 'F')
+        # GROUP BY
+        #     S.PASSYEAR;
+            CREATE OR REPLACE VIEW PASSED_ALL_SUBJECTS AS
+    SELECT
+        S.PASSYEAR,
+        COUNT(DISTINCT S.STUDENTID) AS TotalStudents,
+        COUNT(DISTINCT CASE 
+            WHEN R.YEAR = '1' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR = '1') THEN S.STUDENTID 
+            WHEN R.YEAR = '2' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '2') THEN S.STUDENTID 
+            WHEN R.YEAR = '3' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '3') THEN S.STUDENTID 
+            WHEN R.YEAR = '4' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '4') THEN S.STUDENTID 
+            ELSE NULL 
+        END) AS year1,
+        COUNT(DISTINCT CASE 
+            WHEN R.YEAR = '2' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '2') THEN S.STUDENTID 
+            WHEN R.YEAR = '3' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '3') THEN S.STUDENTID 
+            WHEN R.YEAR = '4' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '4') THEN S.STUDENTID 
+            ELSE NULL 
+        END) AS year2,
+        COUNT(DISTINCT CASE 
+            WHEN R.YEAR = '3' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '3') THEN S.STUDENTID 
+            WHEN R.YEAR = '4' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '4') THEN S.STUDENTID 
+            ELSE NULL 
+        END) AS year3,
+        COUNT(DISTINCT CASE 
+            WHEN R.YEAR = '4' AND 'F' NOT IN (SELECT R2.GRADE FROM RESULT R2 WHERE R2.STUDENTID = R.STUDENTID AND R2.YEAR <= '4') THEN S.STUDENTID 
+            ELSE NULL 
+        END) AS year4
+    FROM
+        STUDENT S
+    JOIN
+        RESULT R ON S.STUDENTID = R.STUDENTID
+    GROUP BY
+        S.PASSYEAR;
 
-# Route to render the main page
+
+
+    """
+    db.session.execute(text(PASSED_ALL_SUBJECTS_VIEW_QUERY))
+    db.session.commit()
+
+
 @app.route('/')
 def hello():
-    return render_template('index.html')
+    # return render_template('index.html')
+    year1_data = db.session.execute(text("SELECT * FROM YEAR1")).fetchall()
+    passed_all_subjects_data = db.session.execute(text("SELECT * FROM PASSED_ALL_SUBJECTS")).fetchall()
+    return render_template('index.html', year1_data=year1_data, passed_all_subjects_data=passed_all_subjects_data)
 
-# Route to render the student page
+
 @app.route('/Student')
 def student_page():
     return render_template('Student.html')
 
-@app.route('/update_backlog', methods=['POST'])
-def update_backlog_route():
-    # Call the function to update backlog
-    update_backlog()
-    return jsonify({'message': 'Backlog updated successfully'})
-
-
-# Route to render the student page
-# @app.route('/Student')
-# def student_page():
-#     # Query the database to retrieve student data
-#     students = Student.query.all()
-#     return render_template('Student.html', students=students)
-
-
-# Route to render the department page
 @app.route('/Department')
 def department_page():
     return render_template('Department.html')
@@ -100,24 +158,31 @@ def Result_page():
 def Course_page():
     return render_template('Course.html')
 
-# Route to handle CSV file upload for any page
+@app.route('/reeval')
+def reevaluation_page():
+    return render_template('reeval.html')
+
+@app.route('/supplementary')
+def supplementary_page():
+    return render_template('supplementary.html')
+
+@app.route('/resultupdate')
+def resultupdate_page():
+    return render_template('resultupdate.html')
+
 @app.route('/upload/<page>', methods=['POST'])
 def upload_csv(page):
-    # Check if a file is provided
     if 'csvFile' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
 
     file = request.files['csvFile']
 
-    # Check if the file is empty
     if file.filename == '':
         return jsonify({'error': 'Empty file provided'}), 400
 
-    # Check if the file is a CSV file
     if not file.filename.endswith('.csv'):
         return jsonify({'error': 'Invalid file format. Only CSV files are allowed'}), 400
 
-    # Determine the data model based on the page
     if page == 'student':
         data_model = Student
     elif page == 'department':
@@ -135,44 +200,44 @@ def upload_csv(page):
     temp_file_path = os.path.join(app.root_path, 'temp.csv')
     file.save(temp_file_path)
 
-    # Read CSV file into a DataFrame
-    df = pd.read_csv(temp_file_path)
+    df = pd.read_csv(temp_file_path, skipinitialspace=False)
 
-    # Remove leading/trailing spaces from column names
-    df.columns = df.columns.str.strip()
 
-    # Insert DataFrame records into MySQL database
+    df.columns = df.columns.str.strip() #ignore the spaces in the columns
+
     try:
-        # Loop through each row in the DataFrame
         for index, row in df.iterrows():
-            # Create an instance of the corresponding data model with data from the current row
             record = data_model(**row)
-            # Add the record to the session
             db.session.add(record)
         
-        # Commit changes to the database
         db.session.commit()
+
+        if page == 'result':
+            update_backlog()
+
         return jsonify({'message': 'Data inserted successfully', 'file_path': temp_file_path})
     except Exception as e:
-        # Rollback changes if an error occurs
         db.session.rollback()
+        logging.error(f"Error uploading course CSV: {e}")
+
         return jsonify({'error': f'Error inserting data: {e}'}), 500
     finally:
-        # Close the database session
         db.session.close()
 
 
 def update_backlog():
     try:
-        # Reset all backlogs to 0
         db.session.query(Student).update({Student.backlog: 0})
         db.session.commit()
 
-        # Execute SQL update statement to increment backlog count for students with failing grades
         sql = """
-        UPDATE student 
-        SET backlog = backlog + 1
-        WHERE studentid IN (SELECT studentid FROM result WHERE grade = 'F')
+        UPDATE student
+        SET backlog = (
+            SELECT COUNT(*)
+            FROM result
+            WHERE result.studentid = student.studentid
+            AND (result.grade = 'F' OR result.supplementary = 'YES')
+        );
         """
         result = db.session.execute(text(sql))
         db.session.commit()
@@ -184,6 +249,112 @@ def update_backlog():
         db.session.rollback()
         logging.error(f"Error updating backlog counts: {e}")
 
+@app.route('/update/resultreeval', methods=['POST'])
+def update_result_csv():
+    if 'csvFile' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['csvFile']
+
+    if file.filename == '':
+        return jsonify({'error': 'Empty file provided'}), 400
+
+    if not file.filename.endswith('.csv'):
+        return jsonify({'error': 'Invalid file format. Only CSV files are allowed'}), 400
+
+    try:
+        temp_file_path = os.path.join(app.root_path, 'temp.csv')
+        file.save(temp_file_path)
+
+        df = pd.read_csv(temp_file_path)
+
+        df.columns = df.columns.str.strip()
+
+        for index, row in df.iterrows():
+            result_record = Result.query.filter_by(studentid=row['studentid'], courseid=row['courseid']).first()
+
+            if result_record:
+                result_record.marksobtained = row['marksobtained']
+                result_record.grade = row['grade']
+                result_record.sem = row['sem']
+                result_record.year = row['year']
+
+        db.session.commit()
+        update_backlog()
+
+        return jsonify({'message': 'Data updated successfully', 'file_path': temp_file_path})
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating result CSV: {e}")
+        return jsonify({'error': f'Error updating data: {e}'}), 500
+    finally:
+        db.session.close()
+
+@app.route('/update/supplementary', methods=['POST'])
+def update_supplementary_csv():
+    if 'csvFile' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['csvFile']
+
+    if file.filename == '':
+        return jsonify({'error': 'Empty file provided'}), 400
+
+    if not file.filename.endswith('.csv'):
+        return jsonify({'error': 'Invalid file format. Only CSV files are allowed'}), 400
+
+    try:
+        temp_file_path = os.path.join(app.root_path, 'temp.csv')
+        file.save(temp_file_path)
+
+        df = pd.read_csv(temp_file_path)
+
+        df.columns = df.columns.str.strip()
+
+        for index, row in df.iterrows():
+            result_record = Result.query.filter_by(studentid=row['studentid'], courseid=row['courseid']).first()
+
+            if result_record:
+                result_record.marksobtained = row['marksobtained']
+                result_record.grade = row['grade']
+                result_record.sem = row['sem']
+                result_record.year = row['year']
+                result_record.supplementary=row['supplementary']
+
+        db.session.commit()
+        update_backlog()
+        return jsonify({'message': 'Data updated successfully', 'file_path': temp_file_path})
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating result CSV: {e}")
+        return jsonify({'error': f'Error updating data: {e}'}), 500
+    finally:
+        db.session.close()
+
+@app.route('/submit_manual_result', methods=['POST'])
+def manual_update_result():
+    student_id = request.form['studentId']
+    course_id = request.form['courseId']
+    marks_obtained = request.form['marksObtained']
+    grade = request.form['grade']
+    sem = request.form['sem']
+    year = request.form['year']
+    supplementary = request.form['supplementary']
+
+    existing_result = Result.query.filter_by(studentid=student_id, courseid=course_id).first()
+    if existing_result:
+        # Update the existing record
+        existing_result.marksobtained = marks_obtained
+        existing_result.grade = grade
+        existing_result.sem = sem
+        existing_result.year = year
+        existing_result.supplementary = supplementary
+        db.session.commit()
+        update_backlog()
+
+        return 'Result updated successfully'
+
+    return 'No matching record found for update'
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

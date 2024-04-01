@@ -3,27 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Page</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='result.css') }}">
+<title>Student Result Analysis</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='student.css') }}">
+
 </head>
 <body>
-  <h1>Result Page</h1>
+  <h1>supplementary update Page</h1>
   
-  <div class="form-container">
-    <form id="uploadForm" enctype="multipart/form-data">
-      <input type="file" id="csvFileInput" name="csvFile" accept=".csv">
-      <button type="submit">Upload CSV</button>
-    </form>
-  </div>
-
-  <div class="button-group">
-    <a href="/reeval" class="button">Re-evaluation update</a>
-    <a href="/supplementary" class="button">supplementary update</a>
-    <a href="/resultupdate" class="button">result update</a>
-  </div>
-
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" id="csvFileInput" name="csvFile" accept=".csv">
+    <button type="submit">Upload CSV</button>
+  </form>
+  
   <script>
-     document.getElementById('uploadForm').addEventListener('submit', function(event) {
+    document.getElementById('uploadForm').addEventListener('submit', function(event) {
         event.preventDefault(); // Prevent the default form submission
 
         const formData = new FormData();
@@ -31,7 +24,7 @@
         const file = fileInput.files[0];
         formData.append('csvFile', file);
 
-        fetch('/upload/result', {
+        fetch('/update/supplementary', {
             method: 'POST',
             body: formData
         })

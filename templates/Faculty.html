@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Department Page</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='student.css') }}">
+
 </head>
 <body>
   <h1>Faculty Page</h1>
@@ -14,25 +16,28 @@
   </form>
 
   <script>
-    document.getElementById('uploadForm').addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent the default form submission
+     document.getElementById('uploadForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
 
-      const formData = new FormData();
-      const fileInput = document.getElementById('csvFileInput');
-      const file = fileInput.files[0];
-      formData.append('csvFile', file);
+        const formData = new FormData();
+        const fileInput = document.getElementById('csvFileInput');
+        const file = fileInput.files[0];
+        formData.append('csvFile', file);
 
-      fetch('/upload/faculty', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.text())
-      .then(data => {
-        console.log('File path:', data);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+        fetch('/upload/faculty', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            alert('Data uploaded successfully');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while uploading data');
+        });
     });
   </script>
 </body>

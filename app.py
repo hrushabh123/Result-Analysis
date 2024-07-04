@@ -7,7 +7,7 @@ import logging
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:4sf21ci030@localhost:3306/result'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'DATABASE LOGIN CREDENTIAL'
 db = SQLAlchemy(app)
 
 class Student(db.Model):
